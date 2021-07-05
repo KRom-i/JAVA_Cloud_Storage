@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--        8.0.171-->
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="MainController">
+   <children>
+      <MenuBar>
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Close" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Edit">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Delete" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <HBox VBox.vgrow="ALWAYS" spacing="5" >
+         <children>
+            <VBox VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" alignment="CENTER" >
+               <children>
+                   <HBox HBox.hgrow="ALWAYS">
+                   <Button text="Домой" onAction="#getRootServerDir"></Button>
+                   <Button text="Назад" onAction="#getServerDirStepBack"></Button>
+                  <TextField fx:id="textCurrentDirServer" HBox.hgrow="ALWAYS" onAction="#selectionCurrentDirServer"/>
+                  <TextField fx:id="textSearchServerFile" HBox.hgrow="ALWAYS" onAction="#searchServerFile"/>
+                  <Button text="Поиск"></Button>
+                   </HBox>
+                  <ListView fx:id="listCurrentDirServer" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" onMouseClicked="#openServerDirOrFile"/>
+
+               </children>
+            </VBox>
+             <VBox VBox.vgrow="ALWAYS" alignment="CENTER" spacing="5">
+                 <Button text="Скачать" minWidth="140"></Button>
+                 <Button text="Загрузить" minWidth="140"></Button>
+                 <Button text="Переименовать" minWidth="140"></Button>
+                 <Button text="Копировать" minWidth="140"></Button>
+                 <Button text="Вырезать" minWidth="140"></Button>
+                 <Button text="Вставить" minWidth="140"></Button>
+                 <Button text="Открыть" minWidth="140"></Button>
+                 <Button text="Архивировать" minWidth="140"></Button>
+                 <Button text="Разархиватор" minWidth="140"></Button>
+                 <Button text="Удалить" minWidth="140"></Button>
+             </VBox>
+            <VBox VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+               <children>
+                   <HBox HBox.hgrow="ALWAYS">
+                       <Button text="Домой"></Button>
+                       <Button text="Назад"></Button>
+                       <TextField fx:id="textCurrentDirUser" HBox.hgrow="ALWAYS" onAction="#selectionCurrentDirUser"/>
+                       <TextField fx:id="textSearchUserFile" HBox.hgrow="ALWAYS" onAction="#searchUserFile"/>
+                       <Button text="Поиск"></Button>
+                   </HBox>
+                  <ListView fx:id="listCurrentDirUser" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" onMouseClicked="#openUserDirOrFile" />
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+   </children>
+</VBox>
