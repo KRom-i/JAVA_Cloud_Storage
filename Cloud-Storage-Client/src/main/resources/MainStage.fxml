@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--        8.0.171-->
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UserInterface.MainController">
+   <children>
+      <MenuBar>
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Close" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Edit">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Delete" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <HBox fx:id="mainHBox" VBox.vgrow="ALWAYS" spacing="5" >
+         <children>
+            <VBox VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" alignment="CENTER" >
+               <children>
+                   <HBox HBox.hgrow="ALWAYS">
+                       <Button fx:id="butRootServerDir" text="Домой" onAction="#getRootServerDir"/>
+                       <Button fx:id="butServerDirStepBack" text="Назад" onAction="#getServerDirStepBack"/>
+                  <TextField fx:id="textCurrentDirServer" HBox.hgrow="ALWAYS" onAction="#selectionCurrentDirServer"/>
+                  <TextField fx:id="textSearchServerFile" HBox.hgrow="ALWAYS" onAction="#searchServerFile"/>
+                  <Button text="Поиск"></Button>
+                   </HBox>
+                  <ListView fx:id="listCurrentDirServer" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" onMouseClicked="#openServerDirOrFile"/>
+
+               </children>
+            </VBox>
+            <VBox VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+               <children>
+                   <HBox HBox.hgrow="ALWAYS">
+                       <Button fx:id="butRootUserDir" text="Домой" onAction="#getRootUserDir"/>
+                       <Button fx:id="butUserDirStepBack" text="Назад" onAction="#getUserDirStepBack"/>
+                       <ChoiceBox fx:id="choiceRootUserDir"/>
+                       <TextField fx:id="textCurrentDirUser" HBox.hgrow="ALWAYS" onAction="#selectionCurrentDirUser"/>
+                       <TextField fx:id="textSearchUserFile" HBox.hgrow="ALWAYS" onAction="#searchUserFile"/>
+                       <Button text="Поиск"></Button>
+                   </HBox>
+                  <ListView fx:id="listCurrentDirUser" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" onMouseClicked="#openUserDirOrFile" />
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+   </children>
+</VBox>
