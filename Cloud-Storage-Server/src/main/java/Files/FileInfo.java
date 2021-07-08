@@ -1,18 +1,19 @@
 package Files;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Date;
 
 public class FileInfo {
 
-    private File file;
+    private String path;
     private String name;
     private String type;
     private long size;
 
-    public FileInfo (File file) {
+    public FileInfo (File file, String path) {
 
-        this.file = file;
+        this.path = path;
 
         if (file.isDirectory()){
             this.name = file.getName();
@@ -49,6 +50,6 @@ public class FileInfo {
 
     @Override
     public String toString () {
-        return String.format("FileInfo:%s:%s:%s:%s", file, name, type, size);
+        return String.format("FileInfo:%s:%s:%s:%s", path, name, type, size);
     }
 }

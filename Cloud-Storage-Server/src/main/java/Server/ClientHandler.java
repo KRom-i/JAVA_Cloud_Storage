@@ -5,6 +5,8 @@ import Files.*;
 import Logger.Log;
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,14 +20,12 @@ public class ClientHandler implements Runnable {
     private DataInputStream in;
     private static final String ROOT = "ServerRootDir";
 
-    // Временная заглушка т.к отсутствует БД и авторизация пользователя
-    private Client client = new Client("USER", ROOT + File.separator + "1");;
-    boolean auth = true;
+    private Client client;
 
     public ClientHandler (Socket socket) throws IOException {
         this.socket = socket;
-        out = new DataOutputStream(socket.getOutputStream());
-        in = new DataInputStream(socket.getInputStream());
+        this.out = new DataOutputStream(socket.getOutputStream());
+        this.in = new DataInputStream(socket.getInputStream());
 
     }
 
@@ -33,27 +33,53 @@ public class ClientHandler implements Runnable {
     @Override
     public void run () {
 
-            Log.info("Client connected: " + socket.getInetAddress());
+        client = new Client("USER", ROOT, socket.getInetAddress());
+
+        Log.info("Client connected: " + client.toString());
+
+            try {
 
             while (true) {
 
                 String[] command = getMessage().split(":");
 
-                if (auth) {
+                if (client.isAuth()) {
 
                     if ("/download".equals(command[0])) {
-                        sendFile(command[1]);
+
+                        if (command[1].startsWith("/rm!")){
+                            sendFile(command[1].split("!")[1]);
+                            delete(command[1].split("!")[1]);
+                        } else {
+                            sendFile(command[1]);
+                        }
+
                     } else if ("/upload".equals(command[0])) {
                         getFile();
+
                     } else if ("/cd".equals(command[0])) {
                         changingCurrentDirectory(command[1]);
-                    } else if ("/delete".equals(command[0])) {
+
+                    } else if ("//cd".equals(command[0])) {
+                        setCurrentDirectory(command[1]);
+
+                    } else if ("/rm".equals(command[0])) {
                         delete(command[1]);
+
                     } else if ("/mkdir".equals(command[0])) {
                         createDirectory(command[1]);
+
                     } else if ("/touch".equals(command[0])) {
                         createFile(command[1]);
+
+                    } else if ("/rename".equals(command[0])) {
+                            renameFile(command[1], command[2]);
+
+                    } else if ("/copy".equals(command[0])){
+                        copy(command[1]);
+
                     } else if ("/exit".equals(command[0])) {
+                        sendMessage("/exit");
                         break;
                     }
 
@@ -62,12 +88,18 @@ public class ClientHandler implements Runnable {
 
             }
 
-            close();
+            } catch (Exception e){
+                e.printStackTrace();
+            } finally {
+                close();
+            }
+
     }
 
 
+
     // Отправка сообщения в цикле клиенту в формате UTF-8
-    private void sendMessage(List<String> stringList) {
+    private void sendMessage(List<String> stringList) throws IOException {
         for (String msg: stringList
         ) {
             sendMessage(msg);
@@ -75,30 +107,20 @@ public class ClientHandler implements Runnable {
     }
 
     // Отправка сообщения клиенту в формате UTF-8
-    private void sendMessage (String massage) {
-        String log = "Sent MSG to client: " + massage;
-        try {
-            out.writeUTF(massage);
-            Log.info(log);
-        } catch (IOException e) {
-            Log.error(log, e);
-        }
+    private void sendMessage (String massage) throws IOException {
+        out.writeUTF(massage);
+        Log.info("OUT MSG: " + massage);
     }
 
     //    Метод возвращает сообщения от клиента в формате UTF-8
-    private String getMessage(){
-        String massage = "";
-        try {
-            massage = in.readUTF();
-            Log.info("IN MSG: " + massage);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private String getMessage() throws IOException {
+        String massage = in.readUTF();
+        Log.info("IN MSG: " + massage);
         return massage;
     }
 
     //  Отправка клиенту текущей директории и списка файлов данной директории
-    private void outListFiles() {
+    private void outListFiles() throws IOException {
         sendMessage(client.currentDirInfo());
         sendMessage(getFilesList());
     }
@@ -112,13 +134,15 @@ public class ClientHandler implements Runnable {
         int numberFile = files.length;
 
         if (numberFile > 0){
-            stringList.add("ls:"+ numberFile);
+            stringList.add("/ls:"+ numberFile);
             for (File f: files
             ) {
-                stringList.add(new FileInfo(f).toString());
+                stringList.add(
+                        new FileInfo(f, (client.getCurrentDir() +"/"+ f.getName())).toString()
+                );
             }
         } else {
-            stringList.add("ls:"+ numberFile);
+            stringList.add("/ls:"+ numberFile);
         }
 
         return stringList;
@@ -159,14 +183,36 @@ public class ClientHandler implements Runnable {
                 client.stepBack();
             }
         } else {
-            client.setCurrentDir(client.getCurrentDir() + "/" + command);
+            File file = new File(client.getCurrentPath() + File.separator + command);
+            if (file.isDirectory()){
+                client.setCurrentDir(client.getCurrentDir() + "/" + command);
+            } else {
+                System.out.println("method open file");
+            }
+
         }
+
+    }
+
+    //    Установить текущую директорию
+    public void setCurrentDirectory (String dir) {
+
+            if (!dir.startsWith("/")) {
+                dir = "/" + dir;
+            }
+            File file = new File(client.getRootClient() + dir);
+            if (file.isDirectory()) {
+                client.setCurrentDir(dir);
+            } else {
+                System.out.println("method open file: " + file.getAbsolutePath());
+            }
+
 
     }
 
     //   Удаление файла или директории
     private void delete(String command) {
-        Path pathDel = Paths.get(client.getCurrentPath() +  File.separator + command);
+        Path pathDel = Paths.get(client.getRootClient() +  File.separator + command);
         try {
             Files.delete(pathDel);
         } catch (Exception io) {
@@ -174,21 +220,42 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    //   Переименовать файл или директорию
+    private void renameFile (String nameSrcFile, String nameDestFile) {
+
+        File srcFile = new File(client.getCurrentPath() +  File.separator + nameSrcFile);
+        File destFile = new File(client.getCurrentPath() +  File.separator + nameDestFile);
+        srcFile.renameTo(destFile);
+    }
+
+    //    Копирование файлов / директории
+    private void copy(String src) {
+
+        Path path1 = Paths.get(client.getRootClient() + File.separator + src);
+
+        Path path2 = Paths.get(client.getCurrentPath() + File.separator + path1.getFileName());
+
+        try {
+            Files.copy(path1, path2);
+        } catch (IOException e){
+
+        }
+
+    }
 
     //    Передача файла с сервера на клиента
     private void sendFile(String command) {
 
-        try {
+        File file = new File(client.getRootClient()  + command);
 
-
-        File file = new File(client.getCurrentPath() +  File.separator + command);
+        try (FileInputStream fis = new FileInputStream(file)){
 
         if (file.exists()) {
 
             long fileLength = file.length();
-            FileInputStream fis = new FileInputStream(file);
 
-            out.writeUTF("//download");
+
+            out.writeUTF("/download");
             out.writeUTF(file.getName());
             out.writeLong(fileLength);
 
@@ -206,7 +273,8 @@ public class ClientHandler implements Runnable {
             System.out.println(status);
 
         }
-        } catch (IOException e){
+
+        } catch (Exception e){
             e.printStackTrace();
         }
 
@@ -233,9 +301,10 @@ public class ClientHandler implements Runnable {
                 int read = in.read(buffer);
                 fos.write(buffer, 0, read);
             }
+
             fos.close();
 
-            String status;
+            String status = "";
 
             if (size == file.length()){
                 status = ("File downloaded");
@@ -243,33 +312,36 @@ public class ClientHandler implements Runnable {
                 status = ("Error while loading file");
             }
 
-            out.writeUTF(status);
-            System.out.println(status);
+//            sendMessage(status);
 
         } catch (Exception e){
-            sendMessage("Error while loading file");
             e.printStackTrace();
         }
     }
 
     //    Закрытие потоков и канала
     private void close () {
+
+        Log.info("Client disconnected: " + client.toString());
+
         try {
             socket.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         try {
             out.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         try {
             in.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+
 
 
 

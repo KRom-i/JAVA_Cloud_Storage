@@ -1,5 +1,7 @@
 package Client;
 
+import java.io.File;
+import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -8,23 +10,17 @@ public class Client {
     private String name;
     private String currentDir;
     private Path rootClient;
+    private InetAddress inetAddress;
+    private boolean auth;
 
-
-    public Client (String name, String rootClient) {
+    public Client (String name, String root, InetAddress inetAddress) {
         this.name = name;
         this.currentDir = "";
-        this.rootClient = Paths.get(rootClient);
+        this.rootClient = Paths.get(root + File.separator + "1");
+        this.inetAddress = inetAddress;
+        this.auth = true;
     }
 
-
-    public String getName () {
-        return name;
-    }
-
-    //    changenick (nickname) - изменение имени пользователя
-    public void rename (String name) {
-        this.name = name;
-    }
 
     public String getCurrentDir () {
         return currentDir;
@@ -41,6 +37,7 @@ public class Client {
     public Path getRootClient(){
         return rootClient;
     }
+
     public void stepBack () {
         String[] strings = currentDir.split("/");
         currentDir = "";
@@ -53,6 +50,15 @@ public class Client {
     }
 
     public String currentDirInfo () {
-        return "/currentDir:" + currentDir;
+        return "/cd:" + currentDir;
+    }
+
+    public boolean isAuth () {
+        return auth;
+    }
+
+    @Override
+    public String toString () {
+        return String.format("Name [%s] InetAddress [%s]", name, inetAddress);
     }
 }
